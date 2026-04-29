@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GardenWorld 🌱 — Learn & Grow!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #87CEEB;
+    --grass: #4CAF50;
+    --soil: #795548;
+    --sun: #FFD700;
+    --leaf: #2e7d32;
+    --water: #29b6f6;
+    --berry: #e91e8c;
+    --harvest: #ff7043;
+    --heart: #66bb6a;
+    --cream: #fffde7;
+    --white: #ffffff;
+    --ink: #1a1a1a;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(180deg, #c9e8ff 0%, #d4f5c4 60%, #a5d6a7 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- FLOATING CLOUDS ---- */
+  .cloud {
+    position: fixed;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50px;
+    animation: floatCloud linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .cloud::before, .cloud::after {
+    content:''; position:absolute; background: rgba(255,255,255,0.85); border-radius:50%;
+  }
+  .cloud::before { width:60%; height:160%; top:-60%; left:15%; }
+  .cloud::after  { width:40%; height:130%; top:-40%; left:55%; }
+  @keyframes floatCloud { from {transform:translateX(-200px);} to {transform:translateX(110vw);} }
+  .c1{width:120px;height:38px;top:5%;animation-duration:28s;animation-delay:-5s;}
+  .c2{width:80px;height:28px;top:12%;animation-duration:22s;animation-delay:-14s;}
+  .c3{width:160px;height:48px;top:18%;animation-duration:35s;animation-delay:-20s;}
+
+  /* ---- HEADER ---- */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  header .title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 7vw, 4rem);
+    color: var(--leaf);
+    text-shadow: 3px 4px 0px #a5d6a7, 0 0 30px rgba(46,125,50,0.3);
+    animation: bounceIn .8s cubic-bezier(.36,.07,.19,.97);
+  }
+  header .subtitle {
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: #33691e;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  @keyframes bounceIn {
+    0%{transform:scale(0.3) rotate(-5deg);opacity:0}
+    60%{transform:scale(1.08) rotate(2deg);}
+    100%{transform:scale(1) rotate(0deg);opacity:1}
+  }
+
+  /* ---- STARS / XP bar ---- */
+  .hud {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 20px;
+    position: relative;
+    z-index: 10;
+  }
+  .star-count {
+    background: var(--sun);
+    border-radius: 30px;
+    padding: 6px 18px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: #5d4037;
+    box-shadow: 0 4px 0 #f57f17, 0 6px 12px rgba(0,0,0,0.15);
+    display:flex; align-items:center; gap:6px;
+  }
+  .xp-bar-wrap {
+    background: rgba(255,255,255,0.6);
+    border-radius: 20px;
+    height: 18px;
+    width: 200px;
+    border: 2px solid rgba(255,255,255,0.9);
+    overflow: hidden;
+  }
+  .xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+    border-radius: 20px;
+    transition: width .6s ease;
+  }
+
+  /* ---- GARDEN WORLD MAP ---- */
+  .world {
+    position: relative;
+    z-index: 10;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 20px 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 16px;
+  }
+
+  .zone {
+    background: white;
+    border-radius: 24px;
+    padding: 20px 16px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    border: 4px solid transparent;
+    text-align: center;
+  }
+  .zone:hover { transform: translateY(-6px) scale(1.02); }
+  .zone.unlocked { box-shadow: 0 8px 0 rgba(0,0,0,0.12), 0 12px 30px rgba(0,0,0,0.1); }
+  .zone.locked { filter: grayscale(0.6); cursor: not-allowed; opacity: 0.7; }
+  .zone.completed { border-color: var(--sun); }
+
+  .zone-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.3rem;
+  }
+  .zone-icon { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 8px; display: block; animation: wiggle 3s ease-in-out infinite; }
+  @keyframes wiggle {
+    0%,100%{transform:rotate(-3deg);}
+    50%{transform:rotate(3deg);}
+  }
+  .zone-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    margin-bottom: 4px;
+  }
+  .zone-desc {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #666;
+    line-height: 1.4;
+  }
+  .zone-stars {
+    margin-top: 10px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+  }
+
+  /* Zone colors */
+  .zone-1 { background: #fff8e1; border-color: #ffe082; }
+  .zone-1 .zone-title { color: #e65100; }
+  .zone-2 { background: #e3f2fd; border-color: #90caf9; }
+  .zone-2 .zone-title { color: #0d47a1; }
+  .zone-3 { background: #fce4ec; border-color: #f48fb1; }
+  .zone-3 .zone-title { color: #880e4f; }
+  .zone-4 { background: #e8f5e9; border-color: #a5d6a7; }
+  .zone-4 .zone-title { color: #1b5e20; }
+  .zone-5 { background: #f3e5f5; border-color: #ce93d8; }
+  .zone-5 .zone-title { color: #4a148c; }
+  .zone-center {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border: 4px solid var(--grass);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: default;
+    transform: none !important;
+  }
+  .zone-center .zone-icon { font-size: 4rem; }
+
+  /* ---- MODAL OVERLAY ---- */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .overlay.active { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 28px;
+    max-width: 620px;
+    width: 100%;
+    margin: auto;
+    overflow: hidden;
+    animation: popIn .35s cubic-bezier(.36,.07,.19,.97);
+    position: relative;
+  }
+  @keyframes popIn {
+    from{transform:scale(0.7) translateY(40px);opacity:0}
+    to{transform:scale(1) translateY(0);opacity:1}
+  }
+
+  .modal-header {
+    padding: 28px 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .modal-icon { font-size: 3.5rem; display: block; margin-bottom: 8px; }
+  .modal-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+  }
+  .modal-subtitle { font-size: 0.9rem; color: #666; font-weight: 600; }
+  .close-btn {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: #f5f5f5;
+    border: none; border-radius: 50%;
+    width: 38px; height: 38px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .close-btn:hover { background: #e0e0e0; }
+
+  .modal-body { padding: 0 24px 28px; }
+
+  /* ---- TABS ---- */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    background: #f5f5f5;
+    padding: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    background: transparent;
+    color: #999;
+    transition: all .2s;
+  }
+  .tab-btn.active {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---- LEARN TAB ---- */
+  .fact-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .fact-card {
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn {
+    from{transform:translateX(-20px);opacity:0}
+    to{transform:translateX(0);opacity:1}
+  }
+  .fact-card .fc-icon { font-size: 1.8rem; flex-shrink:0; }
+  .fact-card .fc-text { font-size: 0.88rem; font-weight: 600; color: #333; line-height: 1.5; }
+  .fact-card .fc-title { font-family:'Fredoka One',cursive; font-size:1rem; margin-bottom:3px; }
+
+  /* ---- ACTIVITY TAB ---- */
+  .activity-box {
+    border-radius: 18px;
+    padding: 18px;
+    background: #fafafa;
+    border: 2px dashed #ccc;
+  }
+  .activity-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Quiz styles */
+  .quiz-question {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .quiz-btn {
+    padding: 12px 10px;
+    border: 3px solid #e0e0e0;
+    border-radius: 14px;
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    line-height: 1.3;
+  }
+  .quiz-btn:hover { transform: scale(1.04); border-color: #90caf9; background: #e3f2fd; }
+  .quiz-btn.correct { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+  .quiz-btn.wrong { background: #ffebee; border-color: #ef5350; color: #b71c1c; }
+  .quiz-feedback {
+    margin-top: 14px;
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: center;
+    display: none;
+  }
+
+  /* Drag activity */
+  .drag-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 50px;
+    border-radius: 12px;
+    padding: 10px;
+    border: 2px dashed #bbb;
+    background: #f9f9f9;
+    margin-bottom: 10px;
+  }
+  .drag-item {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: grab;
+    user-select: none;
+    transition: transform .15s, opacity .15s;
+  }
+  .drag-item:active { cursor: grabbing; transform: scale(1.1); }
+  .drop-zone {
+    border: 2px dashed #aaa;
+    border-radius: 12px;
+    min-height: 60px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+    transition: background .2s;
+  }
+  .drop-zone.drag-over { background: #e8f5e9; border-color: #4caf50; }
+  .drop-label { font-size: 0.78rem; font-weight: 700; color: #888; margin-bottom: 4px; }
+
+  /* Tap-game */
+  .tap-game-area {
+    position: relative;
+    height: 180px;
+    background: linear-gradient(180deg,#87CEEB 50%,#a5d6a7 50%);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tap-plant {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    transition: font-size .3s;
+  }
+  .tap-count {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    font-family:'Fredoka One',cursive;
+    font-size:1.1rem;
+    color: #1b5e20;
+    background:rgba(255,255,255,0.7);
+    border-radius:20px;
+    padding:4px 14px;
+  }
+  .water-drop {
+    position: absolute;
+    font-size: 1.3rem;
+    animation: dropFall 0.8s ease-in forwards;
+    pointer-events: none;
+  }
+  @keyframes dropFall {
+    to { transform: translateY(200px); opacity:0; }
+  }
+
+  /* Sorting game */
+  .sort-items {
+    display: flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
+  }
+  .sort-item {
+    padding:8px 14px;
+    border-radius:20px;
+    background:#f5f5f5;
+    border:2px solid #e0e0e0;
+    font-size:0.88rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .sort-bins {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .sort-bin {
+    border-radius:14px;
+    border:2px dashed;
+    padding:10px;
+    min-height:70px;
+    font-size:0.8rem;
+    font-weight:700;
+  }
+  .sort-bin .bin-label {
+    font-family:'Fredoka One',cursive;
+    font-size:1rem;
+    margin-bottom:6px;
+  }
+  .sort-bin-items { display:flex; flex-wrap:wrap; gap:6px; min-height:30px; }
+
+  /* Feelings activity */
+  .feelings-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .feeling-btn {
+    border-radius:16px;
+    padding:12px 8px;
+    border:2px solid transparent;
+    background:#f5f5f5;
+    cursor:pointer;
+    font-family:'Nunito',sans-serif;
+    font-weight:700;
+    font-size:0.8rem;
+    text-align:center;
+    transition:all .2s;
+  }
+  .feeling-btn:hover { transform:scale(1.05); }
+  .feeling-btn .fe { display:block; font-size:2rem; margin-bottom:4px; }
+  .feeling-result { display:none; margin-top:14px; padding:14px; border-radius:14px; font-size:0.9rem; font-weight:700; text-align:center; }
+
+  /* ---- PROGRESS SECTION ---- */
+  .check-in-wrap {
+    margin-top: 16px;
+    text-align: center;
+  }
+  .earn-btn {
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 30px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #2e7d32, 0 8px 20px rgba(0,0,0,0.15);
+    transition: all .15s;
+  }
+  .earn-btn:hover { transform: translateY(-2px); }
+  .earn-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2e7d32; }
+
+  /* ---- CELEBRATION ---- */
+  .celebration {
+    display: none;
+    position: fixed; inset:0;
+    pointer-events:none;
+    z-index: 999;
+  }
+  .celebration.active { display: block; }
+  .confetti {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    animation: confettiFall 2s ease-in forwards;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity:0; }
+  }
+  .big-emoji {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 5rem;
+    animation: bigPop .5s cubic-bezier(.36,.07,.19,.97) forwards;
+    z-index: 1000;
+    pointer-events: none;
+  }
+  @keyframes bigPop {
+    0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+    60%{transform:translate(-50%,-50%) scale(1.3);}
+    100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+  }
+
+  /* ---- FOOTER ---- */
+  .footer-garden {
+    text-align:center;
+    padding: 30px 20px 20px;
+    font-size:2rem;
+    position:relative; z-index:10;
+    letter-spacing:4px;
+    animation: wave 2s ease-in-out infinite alternate;
+  }
+  @keyframes wave {
+    from{transform:scaleX(1);}
+    to{transform:scaleX(1.01);}
+  }
+  .footer-msg {
+    text-align:center;
+    font-family:'Fredoka One',cursive;
+    font-size:0.95rem;
+    color: #33691e;
+    padding-bottom:30px;
+    position:relative; z-index:10;
+  }
+
+  /* responsive */
+  @media(max-width:600px) {
+    .world { grid-template-columns:1fr 1fr; }
+    .zone-center { grid-column: 1 / 3; grid-row: auto; }
+    .quiz-options { grid-template-columns:1fr; }
+    .feelings-grid { grid-template-columns:repeat(2,1fr); }
+    .sort-bins { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating clouds -->
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="title">🌱 GardenWorld</div>
+  <div class="subtitle">Learn how to care for our planet — one seed at a time!</div>
+</header>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="star-count">⭐ <span id="starCount">0</span></div>
+  <div>
+    <div style="font-size:0.75rem;font-weight:700;color:#555;margin-bottom:3px;">Garden Hero Level</div>
+    <div class="xp-bar-wrap"><div class="xp-bar" id="xpBar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- WORLD MAP -->
+<div class="world">
+  <!-- Zone 1 -->
+  <div class="zone zone-1 unlocked" onclick="openModal(1)">
+    <span class="zone-badge" id="badge-1"></span>
+    <span class="zone-icon">🌱</span>
+    <div class="zone-title">My Garden</div>
+    <div class="zone-desc">Set up & take ownership!</div>
+    <div class="zone-stars" id="stars-1">☆☆☆</div>
+  </div>
+
+  <!-- Center -->
+  <div class="zone zone-center">
+    <span class="zone-icon">🌍</span>
+    <div class="zone-title" style="font-family:'Fredoka One',cursive;color:var(--leaf);font-size:1.4rem;">Garden-Based Learning</div>
+    <div class="zone-desc" style="color:#388e3c;margin-top:6px;">Explore all 5 zones<br>to become a Garden Hero!</div>
+  </div>
+
+  <!-- Zone 2 -->
+  <div class="zone zone-2 unlocked" onclick="openModal(2)">
+    <span class="zone-badge" id="badge-2"></span>
+    <span class="zone-icon">💧</span>
+    <div class="zone-title">Daily Care</div>
+    <div class="zone-desc">Water, weed & watch!</div>
+    <div class="zone-stars" id="stars-2">☆☆☆</div>
+  </div>
+
+  <!-- Zone 3 -->
+  <div class="zone zone-3 unlocked" onclick="openModal(3)">
+    <span class="zone-badge" id="badge-3"></span>
+    <span class="zone-icon">🔍</span>
+    <div class="zone-title">Problem Solve</div>
+    <div class="zone-desc">Find bugs, fix problems!</div>
+    <div class="zone-stars" id="stars-3">☆☆☆</div>
+  </div>
+
+  <!-- Zone 4 -->
+  <div class="zone zone-4 unlocked" onclick="openModal(4)">
+    <span class="zone-badge" id="badge-4"></span>
+    <span class="zone-icon">🍅</span>
+    <div class="zone-title">Harvest Time!</div>
+    <div class="zone-desc">Share food with others!</div>
+    <div class="zone-stars" id="stars-4">☆☆☆</div>
+  </div>
+
+  <!-- Zone 5 -->
+  <div class="zone zone-5 unlocked" onclick="openModal(5)">
+    <span class="zone-badge" id="badge-5"></span>
+    <span class="zone-icon">💚</span>
+    <div class="zone-title">Life Skills</div>
+    <div class="zone-desc">Care, patience & teamwork!</div>
+    <div class="zone-stars" id="stars-5">☆☆☆</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer-garden">🌻🌷🌿🌳🦋🐝🍓</div>
+<div class="footer-msg">Every seed you plant makes Earth a better place! 🌍💚</div>
+
+<!-- ======== MODALS ======== -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+<div class="modal" id="modal">
+  <div class="modal-header" id="modalHeader">
+    <span class="modal-icon" id="modalIcon"></span>
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+  </div>
+  <div class="modal-body">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('learn',this)">📖 Learn</button>
+      <button class="tab-btn" onclick="switchTab('activity',this)">🎮 Activity</button>
+      <button class="tab-btn" onclick="switchTab('challenge',this)">⭐ Challenge</button>
+    </div>
+    <div class="tab-panel active" id="tab-learn"></div>
+    <div class="tab-panel" id="tab-activity"></div>
+    <div class="tab-panel" id="tab-challenge"></div>
+    <div class="check-in-wrap">
+      <button class="earn-btn" id="earnBtn" onclick="earnStar()">⭐ Earn a Star!</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CELEBRATION -->
+<div class="celebration" id="celebration"></div>
+
+<script>
+// ======== DATA ========
+const zones = {
+  1: {
+    icon: '🌱',
+    title: 'My Garden',
+    subtitle: 'Setup & Ownership',
+    color: '#e65100',
+    bg: '#fff8e1',
+    learn: [
+      { icon:'☀️', title:'Sunlight is food!', text:'Plants need at least 6 hours of sunshine every day to grow big and strong — just like you need food!' },
+      { icon:'🪱', title:'Soil is alive!', text:'Good garden soil is full of tiny creatures like worms and bugs that help plants eat. Always test your soil before planting!' },
+      { icon:'🪴', title:'Your very own plant!', text:'Every gardener picks their own seeds — vegetables, herbs, or flowers. Write your name on a tag so everyone knows it\'s yours!' },
+      { icon:'📓', title:'Garden Journal', text:'Scientists write down what they see! Draw your plant, record the date, and write how you feel about it growing.' },
+    ],
+    activity: 'tapgame',
+    challenge: {
+      q: 'You want to start a garden. Which spot is BEST?',
+      opts: [
+        { t:'🌑 Dark corner of the yard', c:false },
+        { t:'☀️ Sunny spot with 6+ hours of light', c:true },
+        { t:'🚰 Right next to a drain pipe', c:false },
+        { t:'🏠 Inside a dark cupboard', c:false },
+      ],
+      win: '🎉 Yes! Plants love sunshine! A sunny spot with good soil is perfect!',
+      lose: '🌱 Hmm, not quite! Plants need lots of sunshine to grow — try again!'
+    }
+  },
+  2: {
+    icon: '💧',
+    title: 'Daily Care',
+    subtitle: 'Routine & Responsibility',
+    color: '#0d47a1',
+    bg: '#e3f2fd',
+    learn: [
+      { icon:'💧', title:'Check before you water!', text:'Don\'t water if the soil is already wet! Push your finger 2cm into the soil — if it\'s damp, wait. If it\'s dry, water time!' },
+      { icon:'🌿', title:'Weeding helps plants!', text:'Weeds steal water and food from your plants. Pull them out gently — you\'re helping your plant breathe!' },
+      { icon:'🗑️', title:'Composting is magic!', text:'Apple cores, vegetable peels, and leaves can be turned into super-food for your garden! This is called composting.' },
+      { icon:'📏', title:'Measure and record!', text:'How tall is your plant today? Measure it each week and draw it in your journal to see how much it grows!' },
+    ],
+    activity: 'sort',
+    challenge: {
+      q: 'You notice your plant\'s leaves are drooping. What do you do FIRST?',
+      opts: [
+        { t:'💧 Check if the soil is dry', c:true },
+        { t:'✂️ Cut all the leaves off', c:false },
+        { t:'🏃 Run away and ignore it', c:false },
+        { t:'🌚 Move it to the darkest spot', c:false },
+      ],
+      win: '💧 Amazing! A drooping plant often just needs water. You\'re a great plant doctor!',
+      lose: '🌿 Let\'s think again! When plants droop, check their water first!'
+    }
+  },
+  3: {
+    icon: '🔍',
+    title: 'Problem Solving',
+    subtitle: 'Investigate & Adapt',
+    color: '#880e4f',
+    bg: '#fce4ec',
+    learn: [
+      { icon:'🐛', title:'Bugs can attack!', text:'Tiny insects like aphids can munch your plants. But don\'t use nasty chemicals — plant marigolds nearby to scare them away!' },
+      { icon:'🌧️', title:'Weather surprises happen!', text:'A big storm might flatten your sunflowers. Don\'t give up! Stake them with sticks and they\'ll bounce back.' },
+      { icon:'🔄', title:'Try, fail, learn!', text:'In science (and gardening!), failing is just data. If something doesn\'t work, try something different. That\'s how all great scientists think!' },
+      { icon:'📝', title:'Write it down!', text:'Keep notes about what went wrong and what you tried. This makes you a real scientist — even grown-up scientists do this!' },
+    ],
+    activity: 'drag',
+    challenge: {
+      q: 'Tiny green bugs are eating your tomato plant! What\'s the best plan?',
+      opts: [
+        { t:'🌼 Plant marigolds nearby', c:true },
+        { t:'☠️ Pour lots of chemicals on it', c:false },
+        { t:'🗑️ Throw the plant away', c:false },
+        { t:'😴 Do nothing, hope they leave', c:false },
+      ],
+      win: '🌼 Brilliant! Marigolds are nature\'s pest control — and they\'re pretty too!',
+      lose: '🔍 Scientists think carefully! There\'s a gentle, natural solution here...'
+    }
+  },
+  4: {
+    icon: '🍅',
+    title: 'Harvest Time!',
+    subtitle: 'Share & Celebrate',
+    color: '#e65100',
+    bg: '#fff3e0',
+    learn: [
+      { icon:'🍓', title:'Harvest day is magical!', text:'When your fruit or vegetable is ripe (colourful and smells great!), it\'s time to pick! Weigh it and record how much you grew.' },
+      { icon:'🥗', title:'Cook what you grow!', text:'Making a salad with vegetables you grew yourself is the BEST feeling. You can taste the sunshine in every bite!' },
+      { icon:'🤝', title:'Share with others!', text:'If you grow more than you can eat, donate it to a food bank. Real heroes share what they have with people who need it most.' },
+      { icon:'🎉', title:'Celebrate every season!', text:'Spring planting day, summer harvest party, autumn seed-saving — every season is worth celebrating with your garden community!' },
+    ],
+    activity: 'quiz2',
+    challenge: {
+      q: 'Your garden grew WAY more tomatoes than you can eat. Best idea?',
+      opts: [
+        { t:'🤝 Share with a food bank', c:true },
+        { t:'🗑️ Throw the extra away', c:false },
+        { t:'🏡 Hide them in your room', c:false },
+        { t:'😤 Complain about too many tomatoes', c:false },
+      ],
+      win: '🤝 You\'re a Community Hero! Sharing food is one of the most wonderful things you can do!',
+      lose: '🍅 Gardens can feed whole communities! Think about who else might love these tomatoes...'
+    }
+  },
+  5: {
+    icon: '💚',
+    title: 'Life Skills',
+    subtitle: 'Feelings & Teamwork',
+    color: '#4a148c',
+    bg: '#f3e5f5',
+    learn: [
+      { icon:'❤️', title:'Plants need care like people!', text:'When you forget to water a plant, it droops and feels sad. This helps us understand empathy — caring about what others need.' },
+      { icon:'⏳', title:'Patience is a superpower!', text:'Seeds don\'t grow overnight. Some plants take months! Learning to wait (and trust the process) is a skill that helps you your whole life.' },
+      { icon:'💪', title:'Tough times make you stronger!', text:'When a storm destroys your plants, it hurts — but you compost the old plants and start again. That\'s called resilience!' },
+      { icon:'🤝', title:'No one gardens alone!', text:'Everyone in your team has a job — waterer, weeder, recorder, composter. Working together makes the whole garden bloom!' },
+    ],
+    activity: 'feelings',
+    challenge: {
+      q: 'A big rainstorm ruined all your sunflowers 😢. What do you do?',
+      opts: [
+        { t:'🔄 Compost them & plant new seeds', c:true },
+        { t:'😭 Give up gardening forever', c:false },
+        { t:'😡 Get angry and stomp on everything', c:false },
+        { t:'🙈 Pretend it didn\'t happen', c:false },
+      ],
+      win: '🌱 That\'s RESILIENCE! Real gardeners (and heroes) get back up and try again!',
+      lose: '💚 It\'s okay to feel sad... but resilient people try again. What would a brave gardener do?'
+    }
+  }
+};
+
+let starCounts = {1:0,2:0,3:0,4:0,5:0};
+let totalStars = 0;
+let currentZone = null;
+let quizAnswered = false;
+
+// ======== HELPERS ========
+function openModal(id) {
+  currentZone = id;
+  quizAnswered = false;
+  const z = zones[id];
+  document.getElementById('modalIcon').textContent = z.icon;
+  document.getElementById('modalTitle').textContent = z.title;
+  document.getElementById('modalSubtitle').textContent = z.subtitle;
+  document.getElementById('modalHeader').style.background = z.bg;
+  buildLearnTab(z);
+  buildActivityTab(z, id);
+  buildChallengeTab(z);
+  document.getElementById('earnBtn').disabled = false;
+  document.getElementById('earnBtn').textContent = '⭐ Earn a Star!';
+  switchTab('learn', document.querySelector('.tab-btn'));
+  document.getElementById('overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('active');
+  currentZone = null;
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ======== BUILD LEARN TAB ========
+function buildLearnTab(z) {
+  const html = `<div class="fact-cards">${z.learn.map((f,i)=>`
+    <div class="fact-card" style="background:${z.bg};animation-delay:${i*0.08}s">
+      <span class="fc-icon">${f.icon}</span>
+      <div class="fc-text"><div class="fc-title" style="color:${z.color}">${f.title}</div>${f.text}</div>
+    </div>`).join('')}</div>`;
+  document.getElementById('tab-learn').innerHTML = html;
+}
+
+// ======== BUILD ACTIVITY TAB ========
+function buildActivityTab(z, id) {
+  let html = '';
+  if (z.activity === 'tapgame') {
+    html = `
+    <div class="activity-box">
+      <div class="activity-title" style="color:${z.color}">🪴 Grow Your Plant!</div>
+      <p style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:12px;">Click to water your plant and watch it grow! Give it 10 drops of water 💧</p>
+      <div class="tap-game-area" id="tapArea" onclick="addWater(event)">
+        <div class="tap-count" id="tapInfo">💧 0 / 10 drops</div>
+        <div class="tap-plant" id="tapPlant">🌱</div>
+      </div>
+    </div>`;
+  } else if (z.activity === 'sort') {
+    html = `
+    <div class="activity-box">
+      <div class="activity-title" style="color:${z.color}">🗑️ Compost or Rubbish?</div>
+      <p style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:10px;">Tap each item to sort it into the right bin!</p>
+      <div class="sort-items" id="sortItems">
+        ${[['🍎 Apple core','compost'],['🧴 Plastic bottle','rubbish'],['🥕 Carrot peel','compost'],['🛍️ Plastic bag','rubbish'],['☕ Tea bag','compost'],['🥫 Tin can','rubbish'],['🌿 Grass clippings','compost'],['🔋 Battery','rubbish']].map(([n,t])=>`<div class="sort-item" data-type="${t}" onclick="sortItem(this,event)">${n}</div>`).join('')}
+      </div>
+      <div class="sort-bins">
+        <div class="sort-bin" style="border-color:#66bb6a;background:#e8f5e9">
+          <div class="bin-label" style="color:#1b5e20">🌱 Compost Bin</div>
+          <div class="sort-bin-items" id="compost-bin"></div>
+        </div>
+        <div class="sort-bin" style="border-color:#ef5350;background:#ffebee">
+          <div class="bin-label" style="color:#b71c1c">🗑️ Rubbish Bin</div>
+          <div class="sort-bin-items" id="rubbish-bin"></div>
+        </div>
+      </div>
+      <div class="quiz-feedback" id="sortFeedback"></div>
+    </div>`;
+  } else if (z.activity === 'drag') {
+    html = `
+    <div class="activity-box">
+      <div class="activity-title" style="color:${z.color}">🌼 Natural Pest Control!</div>
+      <p style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:10px;">Which of these are natural, gentle ways to protect your garden? Tap the GOOD ones! 🌿</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        ${[['Marigold flowers 🌼',true],['Poison spray ☠️',false],['Ladybirds 🐞',true],['Plastic chemicals 🧪',false],['Garlic plant 🧄',true],['Fire 🔥',false],['Companion planting 🌿',true],['Strong perfumes 💨',false]].map(([n,g])=>`<div onclick="togglePest(this,${g})" style="padding:8px 14px;border-radius:20px;background:#f5f5f5;border:2px solid #ccc;cursor:pointer;font-weight:700;font-size:0.82rem;transition:all .2s">${n}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="pestFeedback"></div>
+    </div>`;
+  } else if (z.activity === 'quiz2') {
+    html = `
+    <div class="activity-box">
+      <div class="activity-title" style="color:${z.color}">📊 Harvest Maths!</div>
+      <p style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:10px;">You harvested these veggies this week! Answer the question 🥗</p>
+      <div style="font-size:1.3rem;text-align:center;margin-bottom:10px;letter-spacing:4px">🍅🍅🍅🥕🥕🌽🌽🌽🌽</div>
+      <p style="font-weight:700;font-size:0.95rem;margin-bottom:12px;">You have 3 tomatoes 🍅, 2 carrots 🥕, and 4 corn 🌽. You eat 2 tomatoes and give 2 corn to a friend. How many vegetables do you have left?</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${[5,6,7,8].map(n=>`<button onclick="checkMath(this,${n})" style="padding:12px 20px;border-radius:14px;border:3px solid #ccc;background:white;font-size:1.2rem;font-weight:800;cursor:pointer;flex:1;font-family:Nunito,sans-serif;transition:all .2s">${n}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="mathFeedback"></div>
+    </div>`;
+  } else if (z.activity === 'feelings') {
+    html = `
+    <div class="activity-box">
+      <div class="activity-title" style="color:${z.color}">💚 Garden Feelings!</div>
+      <p style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:12px;">Your sunflower just bloomed after 2 months of watering it every day! How do you feel?</p>
+      <div class="feelings-grid">
+        ${[['😊','Happy & proud!',true],['😴','Bored','It\'s okay to feel many things! But mostly you feel proud after all that hard work!'],['😡','Angry',false],['😢','Sad',false],['🤩','Amazing!',true],['🤔','Curious',true]].map(([e,l,g])=>`<button class="feeling-btn" onclick="pickFeeling(this,'${g}','${l}')"  style="border-color:${z.color}22"><span class="fe">${e}</span>${l}</button>`).join('')}
+      </div>
+      <div class="feeling-result" id="feelingResult"></div>
+    </div>`;
+  }
+  document.getElementById('tab-activity').innerHTML = html;
+  tapCount = 0;
+}
+
+// ======== BUILD CHALLENGE TAB ========
+function buildChallengeTab(z) {
+  const c = z.challenge;
+  const html = `
+  <div class="activity-box">
+    <div class="activity-title" style="color:${z.color}">⭐ Super Challenge!</div>
+    <div class="quiz-question">${c.q}</div>
+    <div class="quiz-options">
+      ${c.opts.map(o=>`<button class="quiz-btn" onclick="checkAnswer(this,${o.c},'${escQ(c.win)}','${escQ(c.lose)}')">${o.t}</button>`).join('')}
+    </div>
+    <div class="quiz-feedback" id="challengeFeedback"></div>
+  </div>`;
+  document.getElementById('tab-challenge').innerHTML = html;
+}
+
+function escQ(s) { return s.replace(/'/g,"\\'"); }
+
+// ======== INTERACTIONS ========
+let tapCount = 0;
+const plantGrowth = ['🌱','🌿','🌾','🌻','🌷'];
+
+function addWater(e) {
+  const area = document.getElementById('tapArea');
+  if (!area) return;
+  if (tapCount >= 10) return;
+  tapCount++;
+  // water drop
+  const drop = document.createElement('div');
+  drop.className = 'water-drop';
+  drop.textContent = '💧';
+  const rect = area.getBoundingClientRect();
+  drop.style.left = (e.clientX - rect.left - 12) + 'px';
+  drop.style.top = (e.clientY - rect.top - 20) + 'px';
+  area.appendChild(drop);
+  setTimeout(()=>drop.remove(), 900);
+  // update plant
+  const plant = document.getElementById('tapPlant');
+  const info = document.getElementById('tapInfo');
+  info.textContent = `💧 ${tapCount} / 10 drops`;
+  const idx = Math.floor(tapCount/2.5);
+  plant.textContent = plantGrowth[Math.min(idx,4)];
+  if (tapCount >= 10) {
+    info.textContent = '🎉 Your plant is THRIVING!';
+    plant.style.fontSize = '4.5rem';
+    celebrateMini('🌻');
+  }
+}
+
+function sortItem(el, e) {
+  if (el.style.opacity === '0.3') return;
+  const type = el.dataset.type;
+  const bin = document.getElementById(type+'-bin');
+  const clone = document.createElement('div');
+  clone.style.cssText = `padding:6px 12px;border-radius:16px;font-size:0.8rem;font-weight:700;background:${type==='compost'?'#a5d6a7':'#ef9a9a'};color:white;`;
+  clone.textContent = el.textContent;
+  bin.appendChild(clone);
+  el.style.opacity = '0.3';
+  el.style.pointerEvents = 'none';
+  const all = document.querySelectorAll('.sort-item');
+  const done = [...all].every(i=>i.style.opacity==='0.3');
+  if (done) {
+    const fb = document.getElementById('sortFeedback');
+    fb.style.display='block';
+    fb.style.background='#e8f5e9';
+    fb.style.color='#1b5e20';
+    fb.textContent='🌱 Well done! Composting food scraps feeds your garden for FREE!';
+    celebrateMini('♻️');
+  }
+}
+
+let pestScore = 0;
+function togglePest(el, isGood) {
+  if (el.style.background === 'rgb(232, 245, 233)' || el.style.background === 'rgb(255, 235, 238)') return;
+  if (isGood) {
+    el.style.background='#e8f5e9'; el.style.borderColor='#4caf50'; el.style.color='#1b5e20';
+    pestScore++;
+    if (pestScore >= 4) {
+      const fb = document.getElementById('pestFeedback');
+      fb.style.display='block'; fb.style.background='#e8f5e9'; fb.style.color='#1b5e20';
+      fb.textContent='🌼 Amazing! Nature has its own ways of protecting your garden!';
+      celebrateMini('🌼');
+    }
+  } else {
+    el.style.background='#ffebee'; el.style.borderColor='#ef5350'; el.style.color='#b71c1c';
+  }
+}
+
+function checkMath(btn, val) {
+  const btns = btn.parentElement.querySelectorAll('button');
+  btns.forEach(b=>b.disabled=true);
+  const fb = document.getElementById('mathFeedback');
+  fb.style.display='block';
+  // 3 tomatoes - 2 eaten = 1, 2 carrots, 4 corn - 2 given = 2 => total = 5
+  if (val === 5) {
+    btn.style.background='#e8f5e9'; btn.style.borderColor='#4caf50';
+    fb.style.background='#e8f5e9'; fb.style.color='#1b5e20';
+    fb.textContent='🥗 Correct! 1 tomato + 2 carrots + 2 corn = 5 veggies. Maths in the garden rocks!';
+    celebrateMini('🥗');
+  } else {
+    btn.style.background='#ffebee'; btn.style.borderColor='#ef5350';
+    fb.style.background='#fff8e1'; fb.style.color='#e65100';
+    fb.textContent='🤔 Not quite! 3-2=1 tomato, still 2 carrots, 4-2=2 corn. 1+2+2=5!';
+  }
+}
+
+function pickFeeling(btn, isGood, label) {
+  const result = document.getElementById('feelingResult');
+  result.style.display='block';
+  if (isGood === 'true' || isGood === true) {
+    result.style.background='#e8f5e9'; result.style.color='#1b5e20';
+    result.textContent=`💚 Yes! Feeling ${label} after growing something is natural. Your hard work paid off!`;
+    btn.style.background='#e8f5e9'; btn.style.borderColor='#4caf50';
+  } else {
+    result.style.background='#fff8e1'; result.style.color='#e65100';
+    result.textContent=`🌱 It\'s okay to feel ${label} — but after all those days of caring, you\'d probably also feel really proud!`;
+    btn.style.background='#fff8e1'; btn.style.borderColor='#ffb74d';
+  }
+}
+
+function checkAnswer(btn, correct, win, lose) {
+  if (document.querySelector('.quiz-btn.correct, .quiz-btn.wrong')) return;
+  const btns = btn.parentElement.querySelectorAll('.quiz-btn');
+  btns.forEach(b=>b.disabled=true);
+  const fb = document.getElementById('challengeFeedback');
+  fb.style.display='block';
+  if (correct) {
+    btn.classList.add('correct');
+    fb.style.color='#1b5e20'; fb.style.background='#e8f5e9';
+    fb.textContent = win;
+    celebrateMini('⭐');
+  } else {
+    btn.classList.add('wrong');
+    fb.style.color='#880e4f'; fb.style.background='#fce4ec';
+    fb.textContent = lose;
+  }
+}
+
+// ======== EARN STAR ========
+function earnStar() {
+  if (!currentZone) return;
+  const prev = starCounts[currentZone];
+  if (prev < 3) starCounts[currentZone]++;
+  totalStars = Object.values(starCounts).reduce((a,b)=>a+b,0);
+  updateHUD();
+  updateZone(currentZone);
+  celebrate();
+  const btn = document.getElementById('earnBtn');
+  btn.textContent = '🌟 Star Earned!';
+  btn.disabled = true;
+}
+
+function updateHUD() {
+  document.getElementById('starCount').textContent = totalStars;
+  document.getElementById('xpBar').style.width = Math.min(totalStars/15*100,100)+'%';
+}
+
+function updateZone(id) {
+  const s = starCounts[id];
+  document.getElementById('stars-'+id).textContent = '★'.repeat(s) + '☆'.repeat(3-s);
+  if (s === 3) document.getElementById('badge-'+id).textContent = '✅';
+  else if (s > 0) document.getElementById('badge-'+id).textContent = '🌟';
+}
+
+// ======== CELEBRATIONS ========
+function celebrateMini(emoji) {
+  const el = document.createElement('div');
+  el.className = 'big-emoji';
+  el.textContent = emoji;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1200);
+}
+
+function celebrate() {
+  const cel = document.getElementById('celebration');
+  cel.innerHTML = '';
+  cel.classList.add('active');
+  const colors = ['#FFD700','#4CAF50','#29b6f6','#e91e8c','#ff7043','#66bb6a'];
+  for (let i=0;i<60;i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random()*100+'vw';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.transform = `rotate(${Math.random()*360}deg)`;
+    c.style.animationDelay = Math.random()*0.8+'s';
+    c.style.animationDuration = (1+Math.random()*1)+'s';
+    c.style.width = (8+Math.random()*8)+'px';
+    c.style.height = (8+Math.random()*8)+'px';
+    c.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    cel.appendChild(c);
+  }
+  celebrateMini('⭐');
+  setTimeout(()=>{cel.classList.remove('active'); cel.innerHTML='';}, 2200);
+}
+</script>
+</body>
+</html>
